@@ -55,7 +55,7 @@ apiRouter.get('/tasks', async (req, res) => {
     const tasks = await Task.find();
     res.json(tasks);
   } catch (err) {
-    res.status(500).json({ error: 'Failed to fetch tasks' });
+    res.status(500).json({ error: 'Failed to fetch tasks', details: err.message });
   }
 });
 
@@ -65,7 +65,7 @@ apiRouter.post('/tasks', async (req, res) => {
     await newTask.save();
     res.status(201).json(newTask);
   } catch (err) {
-    res.status(500).json({ error: 'Failed to create task' });
+    res.status(500).json({ error: 'Failed to create task', details: err.message });
   }
 });
 
@@ -78,7 +78,7 @@ apiRouter.put('/tasks/:id', async (req, res) => {
     );
     res.json(updatedTask);
   } catch (err) {
-    res.status(500).json({ error: 'Failed to update task' });
+    res.status(500).json({ error: 'Failed to update task', details: err.message });
   }
 });
 
@@ -87,7 +87,7 @@ apiRouter.delete('/tasks/:id', async (req, res) => {
     await Task.findOneAndDelete({ id: req.params.id });
     res.json({ message: 'Task deleted' });
   } catch (err) {
-    res.status(500).json({ error: 'Failed to delete task' });
+    res.status(500).json({ error: 'Failed to delete task', details: err.message });
   }
 });
 

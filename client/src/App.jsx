@@ -87,7 +87,8 @@ export default function App() {
                 closeModal();
                 showToast('Task Created successfully', 'success');
             } else {
-                showToast('Failed to create task', 'danger');
+                const errData = await res.json().catch(() => ({}));
+                showToast(`Failed: ${errData.details || 'Unknown error'}`, 'danger');
             }
         } catch (error) {
             showToast('Network error', 'danger');
@@ -114,7 +115,8 @@ export default function App() {
                     showToast('Task Completed!', 'success');
                 }
             } else {
-                showToast('Failed to update task', 'danger');
+                const errData = await res.json().catch(() => ({}));
+                showToast(`Failed: ${errData.details || 'Unknown error'}`, 'danger');
             }
         } catch (error) {
             showToast('Network error', 'danger');
@@ -128,7 +130,8 @@ export default function App() {
                 setTasks(prev => prev.filter(t => t.id !== taskId));
                 showToast('Task Deleted', 'danger');
             } else {
-                showToast('Failed to delete task', 'danger');
+                const errData = await res.json().catch(() => ({}));
+                showToast(`Failed: ${errData.details || 'Unknown error'}`, 'danger');
             }
         } catch (error) {
             showToast('Network error', 'danger');
