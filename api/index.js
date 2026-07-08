@@ -94,6 +94,7 @@ apiRouter.delete('/tasks/:id', async (req, res) => {
 // Mount the router on multiple possible Vercel paths just to be safe
 app.use('/api', apiRouter);
 app.use('/api/index.js', apiRouter);
+app.use('/', apiRouter);
 
 // Fallback to index.html for React Router (if needed)
 app.get('*', (req, res) => {
