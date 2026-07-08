@@ -10,7 +10,7 @@ const PORT = process.env.PORT || 3000;
 // Middleware
 app.use(cors());
 app.use(express.json());
-app.use(express.static(path.join(__dirname, 'client/dist')));
+app.use(express.static(path.join(__dirname, '../public')));
 
 // MongoDB Connection
 mongoose.connect(process.env.MONGODB_URI)
@@ -73,7 +73,7 @@ app.delete('/api/tasks/:id', async (req, res) => {
 
 // Fallback to index.html for React Router (if needed)
 app.get('*', (req, res) => {
-  res.sendFile(path.join(__dirname, 'client/dist/index.html'));
+  res.sendFile(path.join(__dirname, '../public/index.html'));
 });
 
 if (process.env.NODE_ENV !== 'production') {

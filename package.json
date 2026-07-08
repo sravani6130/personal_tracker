@@ -2,10 +2,11 @@
   "name": "personal-tracker",
   "version": "1.0.0",
   "description": "Personal Life Tracker Backend",
-  "main": "server.js",
+  "main": "api/index.js",
   "scripts": {
-    "start": "node server.js",
-    "dev": "node server.js"
+    "start": "node api/index.js",
+    "dev": "node api/index.js",
+    "build": "cd client && npm install && npm run build && cd .. && rm -rf public && mv client/dist public"
   },
   "dependencies": {
     "cors": "^2.8.5",
