@@ -12,10 +12,27 @@ app.use(cors());
 app.use(express.json());
 app.use(express.static(path.join(__dirname, '../public')));
 
-// MongoDB Connection
-mongoose.connect(process.env.MONGODB_URI)
-  .then(() => console.log('Connected to MongoDB'))
-  .catch(err => console.error('MongoDB connection error. Please ensure MONGODB_URI is correctly set in .env file.', err));
+// Serverless MongoDB Connection
+let isConnected = false;
+const connectDB = async () => {
+  if (isConnected) return;
+  try {
+    if (!process.env.MONGODB_URI) {
+      throw new Error("MONGODB_URI is not defined in Environment Variables");
+    }
+    await mongoose.connect(process.env.MONGODB_URI);
+    isConnected = true;
+    console.log('Connected to MongoDB');
+  } catch (err) {
+    console.error('MongoDB connection error:', err);
+  }
+};
+
+// Ensure DB is connected before handling any API requests
+app.use('/api', async (req, res, next) => {
+  await connectDB();
+  next();
+});
 
 // Task Schema
 const taskSchema = new mongoose.Schema({
@@ -30,7 +47,10 @@ const taskSchema = new mongoose.Schema({
 const Task = mongoose.model('Task', taskSchema);
 
 // API Routes
-app.get('/api/tasks', async (req, res) => {
+// We use a router to handle potential path rewriting issues on Vercel
+const apiRouter = express.Router();
+
+apiRouter.get('/tasks', async (req, res) => {
   try {
     const tasks = await Task.find();
     res.json(tasks);
@@ -39,7 +59,7 @@ app.get('/api/tasks', async (req, res) => {
   }
 });
 
-app.post('/api/tasks', async (req, res) => {
+apiRouter.post('/tasks', async (req, res) => {
   try {
     const newTask = new Task(req.body);
     await newTask.save();
@@ -49,7 +69,7 @@ app.post('/api/tasks', async (req, res) => {
   }
 });
 
-app.put('/api/tasks/:id', async (req, res) => {
+apiRouter.put('/tasks/:id', async (req, res) => {
   try {
     const updatedTask = await Task.findOneAndUpdate(
       { id: req.params.id },
@@ -62,7 +82,7 @@ app.put('/api/tasks/:id', async (req, res) => {
   }
 });
 
-app.delete('/api/tasks/:id', async (req, res) => {
+apiRouter.delete('/tasks/:id', async (req, res) => {
   try {
     await Task.findOneAndDelete({ id: req.params.id });
     res.json({ message: 'Task deleted' });
@@ -71,13 +91,18 @@ app.delete('/api/tasks/:id', async (req, res) => {
   }
 });
 
+// Mount the router on multiple possible Vercel paths just to be safe
+app.use('/api', apiRouter);
+app.use('/api/index.js', apiRouter);
+
 // Fallback to index.html for React Router (if needed)
 app.get('*', (req, res) => {
   res.sendFile(path.join(__dirname, '../public/index.html'));
 });
 
 if (process.env.NODE_ENV !== 'production') {
-  app.listen(PORT, () => {
+  app.listen(PORT, async () => {
+    await connectDB();
     console.log(`Server running on port ${PORT}`);
   });
 }
