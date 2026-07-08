@@ -42,8 +42,12 @@ export default function App() {
             if (res.ok) {
                 const data = await res.json();
                 setTasks(data);
+            } else {
+                const errData = await res.json().catch(() => ({}));
+                showToast(`Failed to load tasks: ${errData.details || res.status}`, 'danger');
             }
         } catch (error) {
+            showToast('Network error while loading tasks', 'danger');
             console.error("Failed to fetch tasks:", error);
         }
     };
