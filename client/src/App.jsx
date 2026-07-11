@@ -11,7 +11,8 @@ const CATEGORIES = [
     { name: 'Family', icon: 'ri-home-heart-line', bgClass: 'bg-family' },
     { name: 'Finance', icon: 'ri-wallet-3-line', bgClass: 'bg-finance' },
     { name: 'Health', icon: 'ri-heart-pulse-line', bgClass: 'bg-health' },
-    { name: 'Refresh', icon: 'ri-cup-line', bgClass: 'bg-refresh' }
+    { name: 'Refresh', icon: 'ri-cup-line', bgClass: 'bg-refresh' },
+    { name: 'Purchase', icon: 'ri-shopping-cart-2-line', bgClass: 'bg-purchase' }
 ];
 
 export default function App() {
@@ -24,6 +25,7 @@ export default function App() {
     const [searchQuery, setSearchQuery] = useState('');
     const [filter, setFilter] = useState('all');
     const [isModalOpen, setIsModalOpen] = useState(false);
+    const [editingTask, setEditingTask] = useState(null);
     const [toasts, setToasts] = useState([]);
 
     // Form states
@@ -69,36 +71,61 @@ export default function App() {
         }, 3000);
     };
 
-    const handleCreateTask = async (e) => {
+    const handleSaveTask = async (e) => {
         e.preventDefault();
         if (!formCategory || !formDesc.trim()) return;
 
-        const newTask = {
-            id: 't_' + Date.now() + Math.random().toString(36).substr(2, 9),
-            category: formCategory,
-            description: formDesc.trim(),
-            createdAt: Date.now(),
-            endDate: formEndDate || null,
-            completed: false
-        };
-
-        try {
-            const res = await fetch('/api/tasks', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(newTask)
-            });
-
-            if (res.ok) {
-                setTasks(prev => [...prev, newTask]);
-                closeModal();
-                showToast('Task Created successfully', 'success');
-            } else {
-                const errData = await res.json().catch(() => ({}));
-                showToast(`Failed: ${errData.details || 'Unknown error'}`, 'danger');
+        if (editingTask) {
+            try {
+                const updatedFields = {
+                    category: formCategory,
+                    description: formDesc.trim(),
+                    endDate: formEndDate || null
+                };
+                const res = await fetch(`/api/tasks/${editingTask.id}`, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(updatedFields)
+                });
+                if (res.ok) {
+                    setTasks(prev => prev.map(t => t.id === editingTask.id ? { ...t, ...updatedFields } : t));
+                    closeModal();
+                    showToast('Task Updated successfully', 'success');
+                } else {
+                    const errData = await res.json().catch(() => ({}));
+                    showToast(`Failed: ${errData.details || 'Unknown error'}`, 'danger');
+                }
+            } catch (error) {
+                showToast('Network error', 'danger');
             }
-        } catch (error) {
-            showToast('Network error', 'danger');
+        } else {
+            const newTask = {
+                id: 't_' + Date.now() + Math.random().toString(36).substr(2, 9),
+                category: formCategory,
+                description: formDesc.trim(),
+                createdAt: Date.now(),
+                endDate: formEndDate || null,
+                completed: false
+            };
+
+            try {
+                const res = await fetch('/api/tasks', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(newTask)
+                });
+
+                if (res.ok) {
+                    setTasks(prev => [...prev, newTask]);
+                    closeModal();
+                    showToast('Task Created successfully', 'success');
+                } else {
+                    const errData = await res.json().catch(() => ({}));
+                    showToast(`Failed: ${errData.details || 'Unknown error'}`, 'danger');
+                }
+            } catch (error) {
+                showToast('Network error', 'danger');
+            }
         }
     };
 
@@ -156,9 +183,18 @@ export default function App() {
     };
 
     const openModal = () => {
+        setEditingTask(null);
         setFormCategory(currentCategory || '');
         setFormDesc('');
         setFormEndDate('');
+        setIsModalOpen(true);
+    };
+
+    const openEditModal = (task) => {
+        setEditingTask(task);
+        setFormCategory(task.category);
+        setFormDesc(task.description);
+        setFormEndDate(task.endDate || '');
         setIsModalOpen(true);
     };
 
@@ -376,6 +412,9 @@ export default function App() {
                                                 </div>
                                             </div>
                                             <div className="task-actions">
+                                                <button className="btn-icon btn-edit" onClick={() => openEditModal(task)}>
+                                                    <i className="ri-pencil-line"></i>
+                                                </button>
                                                 <button className="btn-icon btn-delete" onClick={() => deleteTask(task.id)}>
                                                     <i className="ri-delete-bin-line"></i>
                                                 </button>
@@ -396,10 +435,10 @@ export default function App() {
             <div className={`modal-overlay ${isModalOpen ? 'active' : ''}`} onClick={(e) => e.target.classList.contains('modal-overlay') && closeModal()}>
                 <div className="modal glass">
                     <div className="modal-header">
-                        <h2>New Task</h2>
+                        <h2>{editingTask ? 'Edit Task' : 'New Task'}</h2>
                         <button className="btn-close" onClick={closeModal}><i className="ri-close-line"></i></button>
                     </div>
-                    <form onSubmit={handleCreateTask}>
+                    <form onSubmit={handleSaveTask}>
                         <div className="form-group">
                             <label>Category</label>
                             <select value={formCategory} onChange={e => setFormCategory(e.target.value)} required>
@@ -417,7 +456,7 @@ export default function App() {
                         </div>
                         <div className="modal-actions">
                             <button type="button" className="btn btn-secondary" onClick={closeModal}>Cancel</button>
-                            <button type="submit" className="btn btn-primary">Create Task</button>
+                            <button type="submit" className="btn btn-primary">{editingTask ? 'Save Changes' : 'Create Task'}</button>
                         </div>
                     </form>
                 </div>

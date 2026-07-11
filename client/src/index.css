@@ -254,6 +254,16 @@ body {
     background-size: 1.25rem;
 }
 
+.filter-box select option {
+    background-color: var(--bg-color);
+    color: var(--text-color);
+}
+
+.form-group select option {
+    background-color: var(--bg-color);
+    color: var(--text-color);
+}
+
 @media (min-width: 768px) {
     .filter-box select {
         width: 200px;
@@ -350,6 +360,7 @@ body {
 .bg-finance { background: linear-gradient(135deg, #01A3A4, #00D2D3); }
 .bg-health { background: linear-gradient(135deg, #FF9FF3, #F368E0); }
 .bg-refresh { background: linear-gradient(135deg, #54A0FF, #2E86DE); }
+.bg-purchase { background: linear-gradient(135deg, #FF4757, #FF6B81); }
 
 /* Tasks View */
 .tasks-header {
@@ -528,6 +539,11 @@ body {
 .btn-icon:hover {
     background: rgba(var(--danger), 0.1);
     color: var(--danger);
+}
+
+.btn-icon.btn-edit:hover {
+    background: rgba(var(--primary-rgb), 0.1);
+    color: var(--primary);
 }
 
 /* Empty State */
