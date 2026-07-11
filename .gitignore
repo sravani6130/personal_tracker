@@ -5,3 +5,5 @@ client/dist/
 .DS_Store
 client/.DS_Store
 client/npm-debug.log*
+dist/
+public/
