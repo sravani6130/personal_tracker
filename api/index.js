@@ -75,6 +75,22 @@ const Task = mongoose.model('Task', taskSchema);
 // We use a router to handle potential path rewriting issues on Vercel
 const apiRouter = express.Router();
 
+apiRouter.post('/verify-pin', (req, res) => {
+  const { pin } = req.body;
+  const correctPin = process.env.APP_PIN;
+  
+  if (!correctPin) {
+    // If no pin is set in the environment, fallback to a default or reject
+    return res.status(500).json({ error: 'Server configuration error: APP_PIN not set' });
+  }
+
+  if (pin === correctPin) {
+    res.json({ success: true });
+  } else {
+    res.status(401).json({ success: false, error: 'Incorrect PIN' });
+  }
+});
+
 apiRouter.get('/tasks', async (req, res) => {
   try {
     const tasks = await Task.find();

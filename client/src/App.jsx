@@ -164,15 +164,28 @@ export default function App() {
 
     const closeModal = () => setIsModalOpen(false);
 
-    const handleUnlock = (e) => {
+    const handleUnlock = async (e) => {
         e.preventDefault();
-        if (pin === '6130') {
-            setIsUnlocked(true);
-            sessionStorage.setItem('app_unlocked', 'true');
-        } else {
+        try {
+            const res = await fetch('/api/verify-pin', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ pin })
+            });
+            const data = await res.json();
+            if (res.ok && data.success) {
+                setIsUnlocked(true);
+                sessionStorage.setItem('app_unlocked', 'true');
+            } else {
+                setPinError(true);
+                setTimeout(() => setPinError(false), 500);
+                setPin('');
+            }
+        } catch (error) {
             setPinError(true);
             setTimeout(() => setPinError(false), 500);
             setPin('');
+            showToast('Network error while verifying PIN', 'danger');
         }
     };
 
