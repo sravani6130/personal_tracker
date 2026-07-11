@@ -13,25 +13,50 @@ app.use(express.json());
 app.use(express.static(path.join(__dirname, '../public')));
 
 // Serverless MongoDB Connection
-let isConnected = false;
+let cached = global.mongoose;
+if (!cached) {
+  cached = global.mongoose = { conn: null, promise: null };
+}
+
 const connectDB = async () => {
-  if (isConnected) return;
-  try {
+  if (cached.conn) {
+    return cached.conn;
+  }
+
+  if (!cached.promise) {
     if (!process.env.MONGODB_URI) {
       throw new Error("MONGODB_URI is not defined in Environment Variables");
     }
-    await mongoose.connect(process.env.MONGODB_URI);
-    isConnected = true;
-    console.log('Connected to MongoDB');
-  } catch (err) {
-    console.error('MongoDB connection error:', err);
+    cached.promise = mongoose.connect(process.env.MONGODB_URI, {
+      bufferCommands: false, // Recommended for serverless
+    }).then((mongoose) => {
+      console.log('Connected to MongoDB');
+      return mongoose;
+    });
   }
+  
+  try {
+    cached.conn = await cached.promise;
+  } catch (err) {
+    cached.promise = null;
+    console.error('MongoDB connection error:', err);
+    throw err;
+  }
+  return cached.conn;
 };
 
 // Ensure DB is connected before handling any API requests
-app.use('/api', async (req, res, next) => {
-  await connectDB();
-  next();
+app.use(async (req, res, next) => {
+  if (req.path.startsWith('/api') || req.path === '/tasks') {
+    try {
+      await connectDB();
+      next();
+    } catch (err) {
+      res.status(500).json({ error: 'Database connection failed', details: err.message });
+    }
+  } else {
+    next();
+  }
 });
 
 // Task Schema
