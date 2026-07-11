@@ -17,6 +17,9 @@ const CATEGORIES = [
 export default function App() {
     const [tasks, setTasks] = useState([]);
     const [theme, setTheme] = useState(localStorage.getItem(THEME_STORAGE_KEY) || 'light');
+    const [isUnlocked, setIsUnlocked] = useState(() => sessionStorage.getItem('app_unlocked') === 'true');
+    const [pin, setPin] = useState('');
+    const [pinError, setPinError] = useState(false);
     const [currentCategory, setCurrentCategory] = useState(null);
     const [searchQuery, setSearchQuery] = useState('');
     const [filter, setFilter] = useState('all');
@@ -160,6 +163,47 @@ export default function App() {
     };
 
     const closeModal = () => setIsModalOpen(false);
+
+    const handleUnlock = (e) => {
+        e.preventDefault();
+        if (pin === '6130') {
+            setIsUnlocked(true);
+            sessionStorage.setItem('app_unlocked', 'true');
+        } else {
+            setPinError(true);
+            setTimeout(() => setPinError(false), 500);
+            setPin('');
+        }
+    };
+
+    if (!isUnlocked) {
+        return (
+            <div className="lock-screen">
+                <div className="lock-container glass">
+                    <i className="ri-lock-password-line lock-icon"></i>
+                    <h2>App Locked</h2>
+                    <p>Enter your 4-digit PIN to access</p>
+                    <form onSubmit={handleUnlock} className="pin-input-container">
+                        <input 
+                            type="password" 
+                            inputMode="numeric"
+                            pattern="[0-9]*"
+                            value={pin}
+                            onChange={(e) => setPin(e.target.value)}
+                            className={`pin-input ${pinError ? 'error' : ''}`}
+                            placeholder="••••"
+                            maxLength="4"
+                            autoFocus
+                        />
+                        <div className="pin-error-text">
+                            {pinError ? "Incorrect PIN" : ""}
+                        </div>
+                        <button type="submit" className="unlock-btn">Unlock</button>
+                    </form>
+                </div>
+            </div>
+        );
+    }
 
     // Dashboard calculations
     const total = tasks.length;
